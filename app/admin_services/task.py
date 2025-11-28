@@ -182,8 +182,8 @@ class Task:
             remaining_gb = max(0, round(old_total_gb - used_gb, 1))
             net_traffic_cost = request.totalGB - remaining_gb
 
-            if net_traffic_cost > 0 and not self.check_admin_traffic(
-                db, username, net_traffic_cost
+            if request.totalGB > 0 and not self.check_admin_traffic(
+                db, username, request.totalGB
             ):
                 return JSONResponse(
                     content={
@@ -203,8 +203,10 @@ class Task:
             )
             if result:
                 panel_api.reset_traffic(admin.inbound_id, request.email)
-                if net_traffic_cost != 0:
+                if admin.return_traffic:
                     self.reduce_admin_traffic(db, username, net_traffic_cost)
+                else:
+                    self.reduce_admin_traffic(db, username, request.totalGB)
 
             return JSONResponse(content=result, status_code=status.HTTP_200_OK)
         except Exception as e:
