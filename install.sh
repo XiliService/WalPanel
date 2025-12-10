@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPO_URL="https://github.com/primeZdev/walpanel.git"
+REPO_URL="https://github.com/XiliService/WalPanel.git"
 INSTALL_DIR="/opt/walpanel"
 DONATION_ADDRESS="TWHESbRLWB9ZNoL9vcphY2r56qHeJLwtmZ"
 
