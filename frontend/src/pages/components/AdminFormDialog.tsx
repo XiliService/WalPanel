@@ -59,6 +59,7 @@ export function AdminFormDialog({
             panel: '',
             inbound_id: null,
             marzban_inbounds: null,
+            flow: null,
             traffic: 0,
             return_traffic: false,
             is_active: true,
@@ -79,10 +80,25 @@ export function AdminFormDialog({
             setValue('panel', admin.panel)
             setValue('inbound_id', admin.inbound_id)
             setValue('marzban_inbounds', admin.marzban_inbounds)
+            setValue('flow', (admin as any).flow ?? null)
             setValue('traffic', bytesToGB(admin.traffic))
             setValue('return_traffic', admin.return_traffic)
             setValue('is_active', admin.is_active)
-            setValue('expiry_date', admin.expiry_date)
+            // If admin has an expiry_date (YYYY-MM-DD), convert to remaining days for the input
+            if (admin.expiry_date) {
+                try {
+                    const exp = new Date(admin.expiry_date + 'T00:00:00')
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const diffMs = exp.getTime() - today.getTime()
+                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+                    setValue('expiry_date', diffDays > 0 ? diffDays : 0)
+                } catch (e) {
+                    setValue('expiry_date', admin.expiry_date)
+                }
+            } else {
+                setValue('expiry_date', null)
+            }
 
             // Parse marzban_inbounds if available
             if (admin.marzban_inbounds) {
@@ -167,9 +183,23 @@ export function AdminFormDialog({
             // Get selected panel type
             const selectedPanel = panels.find(p => p.name === data.panel)
 
+            // Convert expiry days (number) to date string YYYY-MM-DD for backend
+            let expiryForSubmit: string | null = null
+            if (data.expiry_date === null || data.expiry_date === undefined || data.expiry_date === '') {
+                expiryForSubmit = null
+            } else if (typeof data.expiry_date === 'number') {
+                const d = new Date()
+                d.setHours(0, 0, 0, 0)
+                d.setDate(d.getDate() + Math.max(0, Math.floor(data.expiry_date)))
+                expiryForSubmit = d.toISOString().slice(0, 10)
+            } else {
+                expiryForSubmit = String(data.expiry_date)
+            }
+
             // Add marzban_inbounds to data if available
             const submitData = {
                 ...data,
+                expiry_date: expiryForSubmit,
                 marzban_inbounds: Object.keys(selectedInbounds).length > 0
                     ? JSON.stringify(selectedInbounds)
                     : null,
@@ -319,6 +349,30 @@ export function AdminFormDialog({
                         </div>
                     )}
 
+                    {/* Flow - Only for 3x-ui panels */}
+                    {watch('panel') && panels.find(p => p.name === watch('panel'))?.panel_type === '3x-ui' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="flow">Flow *</Label>
+                            <Select
+                                value={watch('flow') ?? 'none'}
+                                onValueChange={(val) => setValue('flow', val === 'none' ? null : val)}
+                                disabled={isSubmitting}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select flow" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    <SelectItem value="xtls-rprx-vision">xtls-rprx-vision</SelectItem>
+                                    <SelectItem value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {errors.flow && (
+                                <p className="text-sm text-destructive">{errors.flow.message}</p>
+                            )}
+                        </div>
+                    )}
+
                     {/* Traffic */}
                     <div className="space-y-2">
                         <Label htmlFor="traffic">Traffic (GB)</Label>
@@ -338,12 +392,15 @@ export function AdminFormDialog({
 
                     {/* Expiry Date */}
                     <div className="space-y-2">
-                        <Label htmlFor="expiry_date">Expiry Date</Label>
+                        <Label htmlFor="expiry_date">Expiry (days)</Label>
                         <Input
                             id="expiry_date"
-                            type="date"
+                            type="number"
+                            min={0}
+                            step={1}
+                            placeholder="Enter number of days (e.g. 10)"
                             disabled={isSubmitting}
-                            {...register('expiry_date')}
+                            {...register('expiry_date', { valueAsNumber: true })}
                         />
                         {errors.expiry_date && (
                             <p className="text-sm text-destructive">{errors.expiry_date.message}</p>

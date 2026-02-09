@@ -46,8 +46,12 @@ export function UserFormDialog({ isOpen, onClose, onSuccess, user }: UserFormDia
             setValue('email', user.username)
             setValue('totalGb', user.data_limit / (1024 ** 3))
             if (user.expiry_date_unix) {
-                const date = new Date(user.expiry_date_unix)
-                setValue('expiryDatetime', date.toISOString().slice(0, 10))
+                const exp = new Date(user.expiry_date_unix)
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                const diffMs = exp.getTime() - today.getTime()
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+                setValue('expiryDatetime', diffDays > 0 ? diffDays : 0)
             }
         } else {
             reset()
@@ -58,12 +62,25 @@ export function UserFormDialog({ isOpen, onClose, onSuccess, user }: UserFormDia
         setServerError(null)
 
         try {
+            // Convert expiry days (number) to date string YYYY-MM-DD for backend
+            let expiryForSubmit: string | null | undefined = null
+            if (data.expiryDatetime === null || data.expiryDatetime === undefined || data.expiryDatetime === '') {
+                expiryForSubmit = null
+            } else if (typeof data.expiryDatetime === 'number') {
+                const d = new Date()
+                d.setHours(0, 0, 0, 0)
+                d.setDate(d.getDate() + Math.max(0, Math.floor(data.expiryDatetime)))
+                expiryForSubmit = d.toISOString().slice(0, 10)
+            } else {
+                expiryForSubmit = String(data.expiryDatetime)
+            }
+
             if (user?.uuid || user?.username || user?.id) {
                 await userAPI.updateUser(
                     user.uuid || user.username || '0',
                     data.email,
                     data.totalGb,
-                    data.expiryDatetime,
+                    expiryForSubmit,
                     user.sub_id || '',
                     user.status,
                     user.flow || '',
@@ -74,7 +91,7 @@ export function UserFormDialog({ isOpen, onClose, onSuccess, user }: UserFormDia
                 await userAPI.createUser(
                     data.email,
                     data.totalGb,
-                    data.expiryDatetime
+                    expiryForSubmit
                 )
             }
 
@@ -138,12 +155,15 @@ export function UserFormDialog({ isOpen, onClose, onSuccess, user }: UserFormDia
 
                     {/* Expiry Date */}
                     <div className="space-y-2">
-                        <Label htmlFor="expiryDatetime">Expiry Date</Label>
+                        <Label htmlFor="expiryDatetime">Expiry (days)</Label>
                         <Input
                             id="expiryDatetime"
-                            type="date"
+                            type="number"
+                            min={0}
+                            step={1}
+                            placeholder="Enter number of days (e.g. 10)"
                             disabled={isSubmitting}
-                            {...register('expiryDatetime')}
+                            {...register('expiryDatetime', { valueAsNumber: true })}
                         />
                         {errors.expiryDatetime && (
                             <p className="text-sm text-destructive">{errors.expiryDatetime.message}</p>

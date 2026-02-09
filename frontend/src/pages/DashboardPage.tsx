@@ -691,9 +691,13 @@ function DetailsRow({
                     )}
                 </TableCell>
                 <TableCell>
-                    <Badge variant={user.status ? 'default' : 'destructive'}>
-                        {user.status ? 'Active' : 'Inactive'}
-                    </Badge>
+                    {user.is_online ? (
+                        <Badge className="bg-emerald-100 text-emerald-800">Online</Badge>
+                    ) : (
+                        <Badge variant={user.status ? 'default' : 'destructive'}>
+                            {user.status ? 'Active' : 'Inactive'}
+                        </Badge>
+                    )}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                     <Button
@@ -826,9 +830,13 @@ function MobileUserCard({
 
                 {/* Right: Status & Chevron */}
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                    <Badge variant={user.status ? 'default' : 'destructive'} className="text-xs">
-                        {user.status ? 'Active' : 'Inactive'}
-                    </Badge>
+                    {user.is_online ? (
+                        <Badge className="text-xs bg-emerald-100 text-emerald-800">Online</Badge>
+                    ) : (
+                        <Badge variant={user.status ? 'default' : 'destructive'} className="text-xs">
+                            {user.status ? 'Active' : 'Inactive'}
+                        </Badge>
+                    )}
                     <ChevronDown
                         className={cn(
                             'h-4 w-4 text-muted-foreground transition-transform',
@@ -841,6 +849,14 @@ function MobileUserCard({
             {/* Expanded View */}
             {isExpanded && (
                 <div className="border-t p-3 space-y-3 bg-muted/30">
+                    {/* Subscription Link */}
+                    {subUrl && user.sub_id && (
+                        <div className="p-3 bg-background rounded-md border">
+                            <div className="text-xs text-muted-foreground mb-1">Subscription Link:</div>
+                            <div className="text-xs font-mono break-all">{`${subUrl}/${user.sub_id?.replace(new RegExp(`^${subUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), '').replace(/^\/+/, '')}`}</div>
+                        </div>
+                    )}
+
                     {/* Expiry */}
                     <div className="text-sm">
                         <p className="text-xs text-muted-foreground">Expiry Date</p>

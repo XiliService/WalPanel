@@ -57,6 +57,11 @@ export const adminSchema = z.object({
         .optional()
         .nullable(),
 
+    flow: z
+        .string()
+        .optional()
+        .nullable(),
+
     traffic: z
         .number()
         .min(0, 'Traffic cannot be negative')
@@ -71,10 +76,19 @@ export const adminSchema = z.object({
         .default(true),
 
     expiry_date: z
-        .string()
+        .union([z.string(), z.number()])
         .nullable()
         .optional(),
 })
+    .superRefine((val, ctx) => {
+        // If panel is 3x-ui, flow must be provided (not null/empty)
+        if (val.panel === '3x-ui') {
+            const f = val.flow
+            if (f === null || f === undefined || String(f).trim() === '') {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Flow is required for 3x-ui panels', path: ['flow'] })
+            }
+        }
+    })
 
 export type AdminFormData = z.infer<typeof adminSchema>
 
@@ -86,6 +100,7 @@ export interface AdminOutput {
     inbound_id: number | null
     marzban_inbounds: string | null
     marzban_password: string | null
+    flow?: string | null
     traffic: number
     return_traffic: boolean
     expiry_date: string | null
@@ -156,7 +171,7 @@ export const userSchema = z.object({
         .max(109951.16, 'Maximum traffic is ~107 TB'),
 
     expiryDatetime: z
-        .string()
+        .union([z.string(), z.number()])
         .optional()
         .nullable(),
 })
