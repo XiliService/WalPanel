@@ -16,6 +16,7 @@ class Admins(Base):
     traffic = Column(BigInteger, default=0)
     return_traffic = Column(Boolean, default=False)
     expiry_date = Column(DateTime, nullable=True)
+    inbound_flow = Column(String, nullable=True)
 
 
 class Panels(Base):
