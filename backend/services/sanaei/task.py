@@ -53,7 +53,11 @@ class AdminTaskService:
 
     async def add_client_to_panel(self, client: ClientInput) -> bool:
         try:
-            await self.api_service.add_client(self.admin.inbound_id, client)
+            await self.api_service.add_client(
+                self.admin.inbound_id,
+                self.admin.inbound_flow if self.admin.inbound_flow else None,
+                client,
+            )
             logger.info(
                 f"Client {client.email} added to panel by admin {self.admin_username}"
             )
@@ -69,7 +73,7 @@ class AdminTaskService:
     ) -> bool:
         try:
             await self.api_service.update_client(
-                uuid, self.admin.inbound_id, client_data
+                uuid, self.admin.inbound_id, self.admin.inbound_flow, client_data
             )
             return True
 

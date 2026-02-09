@@ -21,6 +21,7 @@ def add_admin(db: Session, admin_input: AdminInput) -> None:
         is_active=admin_input.is_active,
         panel=admin_input.panel,
         inbound_id=admin_input.inbound_id,
+        inbound_flow=admin_input.flow,
         marzban_inbounds=admin_input.marzban_inbounds,
         marzban_password=admin_input.marzban_password,
         traffic=admin_input.traffic,
@@ -55,6 +56,7 @@ def update_admin_values(
         admin.is_active = admin_input.is_active
         admin.panel = admin_input.panel
         admin.inbound_id = admin_input.inbound_id
+        admin.inbound_flow = admin_input.flow
         admin.marzban_inbounds = admin_input.marzban_inbounds
         admin.marzban_password = admin_input.marzban_password
         admin.traffic = admin_input.traffic

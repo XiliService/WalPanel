@@ -10,7 +10,7 @@ from backend.db.engin import get_db
 from backend.services import create_new_panel, update_a_panel
 from backend.services.marzban.api import APIService as MarzbanAPI
 from backend.utils.logger import logger, get_10_logs
-from backend.utils.backup import create_backup, restore_database
+from backend.utils.backup import restore_database
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 

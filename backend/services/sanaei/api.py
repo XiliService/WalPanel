@@ -15,15 +15,15 @@ class APIService:
         self.url = url
         self.username = username
         self.password = password
-        
+
         if url not in APIService._api_instances:
             APIService._api_instances[url] = AsyncApi(url, username, password)
-        
+
         self.api = APIService._api_instances[url]
 
     async def ensure_login(self):
         last_login = APIService._last_login_times.get(self.url)
-        
+
         if last_login is None or (datetime.now() - last_login).total_seconds() > 3500:
             try:
                 await self.api.login()
@@ -59,7 +59,7 @@ class APIService:
         clients = await self.api.client.online()
         return clients
 
-    async def add_client(self, inbound_id: int, client: ClientInput):
+    async def add_client(self, inbound_id: int, inbound_flow: str, client: ClientInput):
         await self.ensure_login()
         data = Client(
             email=client.email,
@@ -67,7 +67,7 @@ class APIService:
             enable=client.enable,
             expiry_time=client.expiry_time,
             totalGB=client.total,
-            flow=client.flow,
+            flow=inbound_flow if inbound_flow else client.flow,
             sub_id=client.sub_id,
         )
         await self.api.client.add(inbound_id, [data])
@@ -77,7 +77,7 @@ class APIService:
         return clients
 
     async def update_client(
-        self, uuid: str, inbound_id: int, client: ClientUpdateInput
+        self, uuid: str, inbound_id: int, inbound_flow: str, client: ClientUpdateInput
     ):
         await self.ensure_login()
         data = Client(
@@ -87,7 +87,7 @@ class APIService:
             enable=client.enable,
             expiry_time=client.expiry_time,
             totalGB=client.total,
-            flow=client.flow,
+            flow=inbound_flow if inbound_flow else client.flow,
             sub_id=client.sub_id,
             inbound_id=inbound_id,
         )

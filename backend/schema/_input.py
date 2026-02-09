@@ -9,6 +9,7 @@ class AdminInput(BaseModel):
     is_active: bool = True
     panel: str
     inbound_id: Optional[int] = None
+    flow: Optional[str] = None
     marzban_inbounds: Optional[str] = None
     marzban_password: Optional[str] = None
     traffic: float = 0.0
@@ -22,6 +23,7 @@ class AdminUpdateInput(BaseModel):
     is_active: bool
     panel: str
     inbound_id: Optional[int] = None
+    flow: Optional[str] = None
     marzban_inbounds: Optional[str] = None
     marzban_password: Optional[str] = None
     traffic: float
