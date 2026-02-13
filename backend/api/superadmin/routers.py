@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 import os
 
-from backend.schema.output import ResponseModel
+from backend.schema.output import ResponseModel, AdminOutput, PanelOutput
 from backend.schema._input import AdminInput, AdminUpdateInput, PanelInput, NewsInput
 from backend.db import crud
 from backend.db.engin import get_db
@@ -12,8 +12,21 @@ from backend.services.marzban.api import APIService as MarzbanAPI
 from backend.utils.logger import logger, get_10_logs
 from backend.utils.backup import restore_database
 from backend.auth.auth import get_current_superadmin
+from backend.utils.system import get_system_info
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
+
+
+@router.get("/admins", description="Get all admins")
+async def get_admins(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+    all_admins = crud.get_all_admins(db)
+    return ResponseModel(
+        success=True,
+        message="Admins retrieved successfully",
+        data=[AdminOutput.from_orm(admin) for admin in all_admins],
+    )
 
 
 @router.post("/admin", description="create a new admin", response_model=ResponseModel)
@@ -106,6 +119,18 @@ async def toggle_admin_status(
     return ResponseModel(
         success=True,
         message="Admin status changed successfully",
+    )
+
+
+@router.get("/panels", description="Get all panels")
+async def get_panels(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+    all_panels = crud.get_all_panels(db)
+    return ResponseModel(
+        success=True,
+        message="Panels retrieved successfully",
+        data=[PanelOutput.from_orm(panel) for panel in all_panels],
     )
 
 
@@ -355,7 +380,9 @@ async def get_logs(admin: dict = Depends(get_current_superadmin)):
 
 
 @router.get("/news", description="Get news")
-async def get_news(db: Session = Depends(get_db)):
+async def get_news(
+    db: Session = Depends(get_db), admin: dict = Depends(get_current_superadmin)
+):
     """Get the news"""
     try:
         news = crud.get_news(db)
@@ -385,7 +412,11 @@ async def get_news(db: Session = Depends(get_db)):
 
 
 @router.post("/news", description="Add news", response_model=ResponseModel)
-async def add_news(news: NewsInput, db: Session = Depends(get_db)):
+async def add_news(
+    news: NewsInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     """Add news"""
     try:
         crud.add_news(db, news.news)
@@ -407,7 +438,11 @@ async def add_news(news: NewsInput, db: Session = Depends(get_db)):
 @router.delete(
     "/news/{news_id}", description="Delete news", response_model=ResponseModel
 )
-async def delete_news(news_id: int, db: Session = Depends(get_db)):
+async def delete_news(
+    news_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     """Delete news by ID"""
     try:
         news = db.query(crud.News).filter(crud.News.id == news_id).first()
@@ -434,3 +469,12 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
                 "message": f"Failed to delete news: {str(e)}",
             },
         )
+
+
+@router.get("/system", description="Get system information")
+async def get_system_info_endpoint(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+
+    system_info = get_system_info()
+    return JSONResponse(content={"success": True, "data": system_info})
