@@ -1,4 +1,5 @@
 import { getApiClient } from './api-client'
+import { v4 as uuidv4 } from 'uuid'
 import {
     LoginResponse,
     DashboardData,
@@ -294,7 +295,7 @@ export const userAPI = {
     createUser: async (email: string, totalGb: number, expiryDatetime?: string | null): Promise<ClientsOutput> => {
         const submitData = {
             email,
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             enable: true,
             expiry_time: expiryDatetime ? new Date(expiryDatetime + 'T00:00:00').getTime() : 0,
             total: Math.floor(totalGb * 1024 * 1024 * 1024),
