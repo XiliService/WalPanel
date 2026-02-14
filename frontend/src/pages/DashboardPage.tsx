@@ -56,6 +56,7 @@ import {
 } from '@/components/ui/dialog'
 import { UserFormDialog } from './components/UserFormDialog'
 
+
 interface ExpandedRow {
     [key: string]: boolean
 }
@@ -80,10 +81,39 @@ export function DashboardPage() {
         fetchDashboardData()
     }, [])
 
+    // Auto-refresh system info every 5 seconds for superadmin
+    useEffect(() => {
+        if (userRole !== 'superadmin') return
+
+        const interval = setInterval(async () => {
+            try {
+                const systemInfo = await dashboardAPI.getSystemInfo()
+                setDashboardData((prevData) =>
+                    prevData ? { ...prevData, system: systemInfo } : null
+                )
+            } catch (err) {
+                console.warn('Failed to refresh system info:', err)
+            }
+        }, 5000) // 5 seconds
+
+        return () => clearInterval(interval)
+    }, [userRole])
+
     const fetchDashboardData = async () => {
         try {
             setLoading(true)
             const data = await dashboardAPI.getDashboardData()
+
+            // Fetch system info if user is superadmin
+            if (userRole === 'superadmin') {
+                try {
+                    const systemInfo = await dashboardAPI.getSystemInfo()
+                    data.system = systemInfo
+                } catch (err) {
+                    console.warn('Failed to fetch system info:', err)
+                }
+            }
+
             setDashboardData(data)
             setError(null)
         } catch (err: any) {
@@ -258,6 +288,32 @@ export function DashboardPage() {
                     </Card>
                 </div>
             )}
+
+            {/* Admin News - Only for admin role */}
+            {userRole === 'admin' && dashboardData?.news && dashboardData.news.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-yellow-500" />
+                            News & Updates
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {dashboardData.news.map((newsItem, index) => (
+                            <div
+                                key={index}
+                                className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/20 transition-colors duration-150"
+                                style={{ direction: /[\u0600-\u06FF]/.test(newsItem) ? 'rtl' : 'ltr' }}
+                            >
+                                <Zap className="h-4 w-4 text-yellow-500 mt-1 flex-shrink-0" />
+                                <div className="text-sm text-muted-foreground break-words">{newsItem}</div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+
 
             {/* Admin Stats Row - Only for admin role */}
             {userRole === 'admin' && dashboardData && (

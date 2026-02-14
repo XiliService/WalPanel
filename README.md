@@ -13,7 +13,7 @@
       <img src="https://img.shields.io/badge/Monthly%20Sponsor-MrOcean%20Channel-blue?style=for-the-badge&logo=telegram" alt="Monthly Sponsor">
     </a>
   <p align="center" dir="rtl">
-    <strong>اسپانسر این ماه: کانال MrOcean</strong> با فروش سرور با شروع قیمت 199 تومان <a href="https://t.me/MrOcean_ch/201" target="_blank">مشاهده کانال تلگرام</a>
+    <strong>اسپانسر این ماه: کانال MrOcean</strong> فروش سرور با شروع قیمت 199 تومان <a href="https://t.me/MrOcean_ch/201" target="_blank">مشاهده کانال تلگرام</a>
   </p>
   </p>
 </div>
@@ -27,6 +27,14 @@
 A comprehensive admin dashboard system for managing X-UI panels with role-based access control (SuperAdmin and Admin roles).
 
 ---
+
+## ⛓️‍💥 Supported Panels
+
+- [x] **3x-ui**  
+- [x] **Marzban**  
+- [ ] **PasarGuard**  
+- [ ] **S-ui**   
+- [ ] **Tx-ui**   
 
 ## ✨ Features
 
@@ -94,3 +102,5 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 <div align="center">
   <sub>Built with ❤️ by <a href="https://t.me/primez_dev">PrimeZ</a></sub>
 </div>
+
+[![Stargazers over time](https://starchart.cc/primeZdev/whale-panel.svg?variant=adaptive)](https://starchart.cc/primeZdev/whale-panel)  

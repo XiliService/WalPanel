@@ -53,8 +53,8 @@ export function PanelsPage() {
     const fetchPanels = async () => {
         try {
             setLoading(true)
-            const data = await dashboardAPI.getDashboardData()
-            setPanels(data.panels || [])
+            const data = await dashboardAPI.getPanels()
+            setPanels(data)
             setError(null)
         } catch (err: any) {
             console.error('Failed to fetch panels:', err)

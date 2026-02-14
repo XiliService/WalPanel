@@ -118,10 +118,8 @@ export function AdminFormDialog({
     const loadPanels = async () => {
         try {
             setLoadingPanels(true)
-            const data = await dashboardAPI.getDashboardData()
-            if (data.panels) {
-                setPanels(data.panels.map((p) => ({ name: p.name, panel_type: p.panel_type })))
-            }
+            const fetchedPanels = await dashboardAPI.getPanels()
+            setPanels(fetchedPanels.map((p) => ({ name: p.name, panel_type: p.panel_type })))
         } catch (err) {
             console.error('Failed to load panels:', err)
         } finally {

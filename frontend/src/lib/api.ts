@@ -45,10 +45,50 @@ export const dashboardAPI = {
 
         return response.data.data || {}
     },
+
+    getAdmins: async (): Promise<AdminOutput[]> => {
+        const response = await api.get<ResponseModel<AdminOutput[]>>(`/superadmin/admins`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch admins')
+        }
+
+        return response.data.data || []
+    },
+
+    getPanels: async (): Promise<PanelOutput[]> => {
+        const response = await api.get<ResponseModel<PanelOutput[]>>(`/superadmin/panels`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch panels')
+        }
+
+        return response.data.data || []
+    },
+
+    getSystemInfo: async (): Promise<any> => {
+        const response = await api.get<ResponseModel<any>>(`/superadmin/system`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch system info')
+        }
+
+        return response.data.data || {}
+    },
 }
 
 // Admin API
 export const adminAPI = {
+    getAdmins: async (): Promise<AdminOutput[]> => {
+        const response = await api.get<ResponseModel<AdminOutput[]>>(`/superadmin/admins`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch admins')
+        }
+
+        return response.data.data || []
+    },
+
     createAdmin: async (data: AdminFormData): Promise<AdminOutput> => {
         const submitData = {
             ...data,
@@ -119,6 +159,16 @@ export const adminAPI = {
 
 // Panel API
 export const panelAPI = {
+    getPanels: async (): Promise<PanelOutput[]> => {
+        const response = await api.get<ResponseModel<PanelOutput[]>>(`/superadmin/panels`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch panels')
+        }
+
+        return response.data.data || []
+    },
+
     createPanel: async (data: PanelFormData): Promise<PanelOutput> => {
         const response = await api.post<ResponseModel<PanelOutput>>(`/superadmin/panel`, data)
 
@@ -199,6 +249,32 @@ export const superadminAPI = {
         }
 
         return response.data.data || []
+    },
+
+    getNews: async (): Promise<Array<{ id: number; message: string; created_at: string }>> => {
+        const response = await api.get<ResponseModel<Array<{ id: number; message: string; created_at: string }>>>(`/superadmin/news`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch news')
+        }
+
+        return response.data.data || []
+    },
+
+    addNews: async (message: string): Promise<void> => {
+        const response = await api.post<ResponseModel<void>>(`/superadmin/news`, { news: message })
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to add news')
+        }
+    },
+
+    deleteNews: async (newsId: number): Promise<void> => {
+        const response = await api.delete<ResponseModel<void>>(`/superadmin/news/${newsId}`)
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to delete news')
+        }
     },
 }
 

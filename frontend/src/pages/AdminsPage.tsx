@@ -53,8 +53,8 @@ export function AdminsPage() {
     const fetchAdmins = async () => {
         try {
             setLoading(true)
-            const data = await dashboardAPI.getDashboardData()
-            setAdmins(data.admins || [])
+            const data = await dashboardAPI.getAdmins()
+            setAdmins(data)
             setError(null)
         } catch (err: any) {
             console.error('Failed to fetch admins:', err)

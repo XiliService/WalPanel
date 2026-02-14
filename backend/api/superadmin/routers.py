@@ -3,20 +3,38 @@ from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 import os
 
-from backend.schema.output import ResponseModel
-from backend.schema._input import AdminInput, AdminUpdateInput, PanelInput
+from backend.schema.output import ResponseModel, AdminOutput, PanelOutput
+from backend.schema._input import AdminInput, AdminUpdateInput, PanelInput, NewsInput
 from backend.db import crud
 from backend.db.engin import get_db
 from backend.services import create_new_panel, update_a_panel
 from backend.services.marzban.api import APIService as MarzbanAPI
 from backend.utils.logger import logger, get_10_logs
 from backend.utils.backup import restore_database
+from backend.auth.auth import get_current_superadmin
+from backend.utils.system import get_system_info
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 
 
+@router.get("/admins", description="Get all admins")
+async def get_admins(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+    all_admins = crud.get_all_admins(db)
+    return ResponseModel(
+        success=True,
+        message="Admins retrieved successfully",
+        data=[AdminOutput.from_orm(admin) for admin in all_admins],
+    )
+
+
 @router.post("/admin", description="create a new admin", response_model=ResponseModel)
-async def create_admin(admin_input: AdminInput, db: Session = Depends(get_db)):
+async def create_admin(
+    admin_input: AdminInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     if crud.get_admin_by_username(db, admin_input.username):
         logger.warning(
             f"Attempt to create admin with duplicate username: {admin_input.username}"
@@ -39,7 +57,10 @@ async def create_admin(admin_input: AdminInput, db: Session = Depends(get_db)):
 
 @router.put("/admin/{admin_id}", response_model=ResponseModel)
 async def update_admin(
-    admin_id: int, admin_input: AdminUpdateInput, db: Session = Depends(get_db)
+    admin_id: int,
+    admin_input: AdminUpdateInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
 ):
     if not crud.get_admin_by_username(db, admin_input.username):
         return JSONResponse(
@@ -58,7 +79,11 @@ async def update_admin(
 
 
 @router.delete("/admin/{admin_id}", response_model=ResponseModel)
-async def delete_admin(admin_id: int, db: Session = Depends(get_db)):
+async def delete_admin(
+    admin_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     remove_admin = crud.remove_admin(db, admin_id)
     if not remove_admin:
         logger.warning(f"Attempt to delete non-existent admin with id: {admin_id}")
@@ -77,7 +102,11 @@ async def delete_admin(admin_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/admin/{admin_id}/status", response_model=ResponseModel)
-async def toggle_admin_status(admin_id: int, db: Session = Depends(get_db)):
+async def toggle_admin_status(
+    admin_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     status_changed = crud.change_admin_status(db, admin_id)
     if not status_changed:
         return JSONResponse(
@@ -93,8 +122,24 @@ async def toggle_admin_status(admin_id: int, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/panels", description="Get all panels")
+async def get_panels(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+    all_panels = crud.get_all_panels(db)
+    return ResponseModel(
+        success=True,
+        message="Panels retrieved successfully",
+        data=[PanelOutput.from_orm(panel) for panel in all_panels],
+    )
+
+
 @router.post("/panel", description="add a new panel", response_model=ResponseModel)
-async def create_panel(panel_input: PanelInput, db: Session = Depends(get_db)):
+async def create_panel(
+    panel_input: PanelInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     if crud.get_panel_by_name(db, panel_input.name):
         logger.warning(
             f"Attempt to create panel with duplicate name: {panel_input.name}"
@@ -130,7 +175,10 @@ async def create_panel(panel_input: PanelInput, db: Session = Depends(get_db)):
 
 @router.put("/panel/{panel_id}", response_model=ResponseModel)
 async def update_panel(
-    panel_id: int, panel_input: PanelInput, db: Session = Depends(get_db)
+    panel_id: int,
+    panel_input: PanelInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
 ):
     if not crud.get_panel_by_id(db, panel_id):
         logger.warning(f"Attempt to update non-existent panel with id: {panel_id}")
@@ -163,7 +211,11 @@ async def update_panel(
 
 
 @router.delete("/panel/{panel_id}", response_model=ResponseModel)
-async def delete_panel(panel_id: int, db: Session = Depends(get_db)):
+async def delete_panel(
+    panel_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     remove_panel = crud.remove_panel(db, panel_id)
     if not remove_panel:
         logger.warning(f"Attempt to delete non-existent panel with id: {panel_id}")
@@ -182,7 +234,11 @@ async def delete_panel(panel_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/panel/{panel_id}/status", response_model=ResponseModel)
-async def toggle_panel_status(panel_id: int, db: Session = Depends(get_db)):
+async def toggle_panel_status(
+    panel_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     status_changed = crud.change_panel_status(db, panel_id)
     if not status_changed:
         return JSONResponse(
@@ -199,7 +255,11 @@ async def toggle_panel_status(panel_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/panel/{panel_name}/inbounds")
-async def get_panel_inbounds(panel_name: str, db: Session = Depends(get_db)):
+async def get_panel_inbounds(
+    panel_name: str,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
     """Get available inbounds for a Marzban panel"""
     panel = crud.get_panel_by_name(db, panel_name)
     if not panel:
@@ -242,7 +302,7 @@ async def get_panel_inbounds(panel_name: str, db: Session = Depends(get_db)):
 
 
 @router.get("/backup", description="Download database backup")
-async def download_backup():
+async def download_backup(admin: dict = Depends(get_current_superadmin)):
     """Download the current database as a backup file"""
     db_path = "/app/data/walpanel.db"
     if not os.path.exists(db_path):
@@ -266,7 +326,9 @@ async def download_backup():
     description="Restore database from uploaded file",
     response_model=ResponseModel,
 )
-async def restore_backup(file: UploadFile = File(...)):
+async def restore_backup(
+    file: UploadFile = File(...), admin: dict = Depends(get_current_superadmin)
+):
     """Restore database from an uploaded backup file"""
     if not file.filename.endswith(".db"):
         return JSONResponse(
@@ -297,7 +359,7 @@ async def restore_backup(file: UploadFile = File(...)):
 
 
 @router.get("/logs", description="Get application logs")
-async def get_logs():
+async def get_logs(admin: dict = Depends(get_current_superadmin)):
     """Get the last 10 application logs"""
     try:
         logs = get_10_logs()
@@ -315,3 +377,104 @@ async def get_logs():
                 "message": f"Failed to retrieve logs: {str(e)}",
             },
         )
+
+
+@router.get("/news", description="Get news")
+async def get_news(
+    db: Session = Depends(get_db), admin: dict = Depends(get_current_superadmin)
+):
+    """Get the news"""
+    try:
+        news = crud.get_news(db)
+        return ResponseModel(
+            success=True,
+            message="News retrieved successfully",
+            data=list(
+                map(
+                    lambda x: {
+                        "id": x.id,
+                        "message": x.message,
+                        "created_at": x.created_at,
+                    },
+                    news,
+                )
+            ),
+        )
+    except Exception as e:
+        logger.error(f"Failed to retrieve news: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "message": f"Failed to retrieve news: {str(e)}",
+            },
+        )
+
+
+@router.post("/news", description="Add news", response_model=ResponseModel)
+async def add_news(
+    news: NewsInput,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
+    """Add news"""
+    try:
+        crud.add_news(db, news.news)
+        return ResponseModel(
+            success=True,
+            message="News added successfully",
+        )
+    except Exception as e:
+        logger.error(f"Failed to add news: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "message": f"Failed to add news: {str(e)}",
+            },
+        )
+
+
+@router.delete(
+    "/news/{news_id}", description="Delete news", response_model=ResponseModel
+)
+async def delete_news(
+    news_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(get_current_superadmin),
+):
+    """Delete news by ID"""
+    try:
+        news = db.query(crud.News).filter(crud.News.id == news_id).first()
+        if not news:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={
+                    "success": False,
+                    "message": "News not found",
+                },
+            )
+        db.delete(news)
+        db.commit()
+        return ResponseModel(
+            success=True,
+            message="News deleted successfully",
+        )
+    except Exception as e:
+        logger.error(f"Failed to delete news: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "message": f"Failed to delete news: {str(e)}",
+            },
+        )
+
+
+@router.get("/system", description="Get system information")
+async def get_system_info_endpoint(
+    db: Session = Depends(get_db), current_admin: dict = Depends(get_current_superadmin)
+):
+
+    system_info = get_system_info()
+    return JSONResponse(content={"success": True, "data": system_info})

@@ -207,6 +207,7 @@ export interface LoginResponse {
 export interface DashboardData {
     remaining_traffic?: number
     expiry_time?: string
+    news?: string[]
     sub_url?: string
     users?: ClientsOutput[]
     admins?: AdminOutput[]
