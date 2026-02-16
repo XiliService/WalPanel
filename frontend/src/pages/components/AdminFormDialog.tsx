@@ -330,46 +330,55 @@ export function AdminFormDialog({
                         </div>
                     )}
 
-                    {/* Inbound ID - Only for 3x-ui panels */}
-                    {watch('panel') && panels.find(p => p.name === watch('panel'))?.panel_type === '3x-ui' && (
-                        <div className="space-y-2">
-                            <Label htmlFor="inbound_id">Inbound ID</Label>
-                            <Input
-                                id="inbound_id"
-                                type="number"
-                                placeholder="Optional"
-                                disabled={isSubmitting}
-                                {...register('inbound_id', { valueAsNumber: true })}
-                            />
-                            {errors.inbound_id && (
-                                <p className="text-sm text-destructive">{errors.inbound_id.message}</p>
-                            )}
-                        </div>
-                    )}
+                    {/* Inbound ID - Only for 3x-ui and tx-ui panels */}
+                    {watch('panel') &&
+                        ['3x-ui', 'tx-ui'].includes(
+                            panels.find(p => p.name === watch('panel'))?.panel_type ?? ''
+                        ) && (
+                            <div className="space-y-2">
+                                <Label htmlFor="inbound_id">Inbound ID</Label>
+                                <Input
+                                    id="inbound_id"
+                                    type="number"
+                                    placeholder="Optional"
+                                    disabled={isSubmitting}
+                                    {...register('inbound_id', { valueAsNumber: true })}
+                                />
+                                {errors.inbound_id && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.inbound_id.message}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
-                    {/* Flow - Only for 3x-ui panels */}
-                    {watch('panel') && panels.find(p => p.name === watch('panel'))?.panel_type === '3x-ui' && (
-                        <div className="space-y-2">
-                            <Label htmlFor="flow">Flow *</Label>
-                            <Select
-                                value={watch('flow') ?? 'none'}
-                                onValueChange={(val) => setValue('flow', val === 'none' ? null : val)}
-                                disabled={isSubmitting}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select flow" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    <SelectItem value="xtls-rprx-vision">xtls-rprx-vision</SelectItem>
-                                    <SelectItem value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {errors.flow && (
-                                <p className="text-sm text-destructive">{errors.flow.message}</p>
-                            )}
-                        </div>
-                    )}
+
+                    {/* Flow - Only for 3x-ui and tx-ui panels */}
+                    {watch('panel') &&
+                        ['3x-ui', 'tx-ui'].includes(
+                            panels.find(p => p.name === watch('panel'))?.panel_type ?? ''
+                        ) && (
+                            <div className="space-y-2">
+                                <Label htmlFor="flow">Flow *</Label>
+                                <Select
+                                    value={watch('flow') ?? 'none'}
+                                    onValueChange={(val) => setValue('flow', val === 'none' ? null : val)}
+                                    disabled={isSubmitting}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select flow" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">None</SelectItem>
+                                        <SelectItem value="xtls-rprx-vision">xtls-rprx-vision</SelectItem>
+                                        <SelectItem value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.flow && (
+                                    <p className="text-sm text-destructive">{errors.flow.message}</p>
+                                )}
+                            </div>
+                        )}
 
                     {/* Traffic */}
                     <div className="space-y-2">
