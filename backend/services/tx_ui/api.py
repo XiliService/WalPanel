@@ -12,20 +12,20 @@ class APIService:
     _cached_url: str | None = None
     _token_time: float | None = None
     _token_expiry: float = 300
+    _session: requests.Session | None = None
 
     def __init__(self, url: str, username: str, password: str):
         self.url = url if url.endswith("/") else url + "/"
         self.username = username
         self.password = password
-        self.session: requests.Session | None = None
 
     def _get_session(self) -> requests.Session:
-        if self.session is None:
-            self.session = requests.Session()
-            self.session.headers.update(
+        if APIService._session is None:
+            APIService._session = requests.Session()
+            APIService._session.headers.update(
                 {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
             )
-        return self.session
+        return APIService._session
 
     def _login(self, force: bool = False):
         now = time.time()
